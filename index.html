@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .show table td span:hover{
+            cursor: pointer;
+        }
+        button{
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="create">
+            <h2>添加</h2>
+            username<input type="text" v-model="username">
+            sex<input placeholder="请输入0为女性,1为男性" type="text" v-model="sex">
+            <button @click="add">添加</button>
+            <hr>
+            <div>
+                
+            </div>
+        </div>
+        <div class="show" >
+            <table>
+                <tr>
+                    <td>id</td>
+                    <td>username</td>
+                    <td>sex</td>
+                    <td>操作</td>
+                </tr>
+                <tr v-for="(user,index) in users">
+                    <td>{{user.id}}</td>
+                    <td>{{user.username}}</td>
+                    <td>{{user.sex==1?'男':'女'}}</td>
+                    <td><span @click="showUpdata(index)">更改</span><span @click="remove(index)">删除</span></td>
+                    
+                </tr>
+            </table>
+        </div>
+        <hr>
+        <div class="update" v-if="condition">
+            <h2>修改</h2>
+            newUsername<input type="text" v-model="newUsername">
+            newSex<input placeholder="请输入0为女性,1为男性" type="text" v-model="newSex">
+            <button @click="update">提交</button>
+            <button @click="cancel">取消</button>
+        </div>
+    </div>
+    <script src="./jQuery.js"></script>
+    <script src="./vue.js"></script>
+    <script>
+        var app = new Vue({
+            el : "#app",
+            data : {
+                newUsername : "",
+                newSex: "",
+                newId:0,
+                condition : "false",
+                username : "",
+                sex : "",
+                id : '',
+                users : [
+                ],
+            },
+            mounted() {
+                this.condition=false
+                this.show();
+            },
+            methods: {
+                add(){
+                    if(this.username.length==0){
+                        alert("请输入姓名")
+                        return;
+                    }else{
+                        if(!(this.sex==0||this.sex==1)){
+                            alert("请输入0表示女,1表示男")
+                            return;
+                        }
+                    }
+                    $.ajax({
+                        url : "http://127.0.0.1:8888/mock.php/user/create",
+                        type : 'post',
+                        data : 'username='+this.username+'&sex='+this.sex,
+                        success(res){
+                            if(res>0){
+                                alert('添加成功')
+                            }else{
+                                alert(res);
+                            }
+                        }
+                    })
+                    this.sex="";
+                    this.username="";
+                    this.show();
+                },
+                show(){
+                    jQuery.ajax({
+                        url : "http://127.0.0.1:8888/mock.php/user",
+                        type : "get",
+                        dataType : "json",
+                        success : (res)=>{
+                            this.users=res;
+                        }
+                    })
+                },
+                showUpdata(index){
+                    this.condition=true;
+                    this.newId = this.users[index].id;
+                },
+                update(){
+                    if (confirm("你确定要修改吗")!=true){
+                        return; 
+                    } 
+                    $.ajax({
+                        url : "http://127.0.0.1:8888/mock.php/user/update?id="+this.newId,
+                        type : 'post',
+                        data : 'username='+this.newUsername+'&sex='+this.newSex,
+                        dataType : "json",
+                        success(res){
+                            if(res.status==true){
+                                alert("更改成功");
+                                
+                            }else{
+                                alert(res);
+                            }
+                        }
+                    })
+                    this.condition=false;
+                    this.newSex="";
+                    this.newUsername="";
+                    this.show();
+                },
+                cancel(){
+                    this.condition=false;
+                    this.newSex="";
+                    this.newUsername="";
+                },
+                remove(index){
+                    if (confirm("你确定要删除吗")!=true){
+                        return; 
+                    }
+                    this.newId = this.users[index].id;
+                    $.ajax({
+                        url : "http://127.0.0.1:8888/mock.php/user/delete?id="+this.newId,
+                        type : 'post',
+                        data : 'username='+this.newUsername+'&sex='+this.newSex,
+                        dataType : "json",
+                        success(res){
+                            if(res.status==true){
+                                alert("删除成功");
+                                
+                            }else{
+                                alert(res);
+                            }
+                        }
+                    })
+                    this.condition=false
+                    this.show();
+                },
+            },
+        })
+        
+    </script>
+</body>
+</html>
